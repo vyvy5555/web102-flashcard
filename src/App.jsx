@@ -7,7 +7,7 @@ const App = () => {
 
   /* State variables (current card, flip state) */
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
-  const [isFront, setIsFront] = useState(false)
+  const [isFront, setIsFront] = useState(true)
 
   const currentCard = flashcardsJson.flashcards[currentCardIndex]
   const [userGuess, setUserGuess] = useState('')
@@ -24,7 +24,10 @@ const App = () => {
   }
 
   /* Helper functions */
-  const handleFlip = () => setIsFront(!isFront);
+  const handleFlip = () => {
+    setIsFront(!isFront);
+    resetGuessState();
+  }
 
   const handleInputChange = (event) => {
     setUserGuess(event.target.value)
@@ -37,7 +40,7 @@ const App = () => {
     else {
       setCurrentCardIndex(0);
     }
-    setIsFront(false);
+    setIsFront(true);
     resetGuessState();
   }
 
@@ -45,7 +48,7 @@ const App = () => {
     if (currentCardIndex > 0) {
       setCurrentCardIndex(currentCardIndex - 1);
     }
-    setIsFront(false);
+    setIsFront(true);
     resetGuessState();
   }
 
@@ -61,7 +64,6 @@ const App = () => {
     
     setIsCorrect(isAnswerCorrect)
     setHasSubmitted(true)
-    setIsFront(true)
   }
 
   const checkAnswer = (guess, correctAnswer) => {
@@ -84,7 +86,7 @@ const App = () => {
         <h4>Number of Cards: {flashcardsJson.flashcards.length}</h4>
       </div>
       <div className="card-container">
-        <Card front={currentCard.question} back={currentCard.answer} isFlipped={isFront} handleFlip={handleFlip}/>
+        <Card front={currentCard.question} back={currentCard.answer} isFlipped={!isFront} handleFlip={handleFlip}/>
       </div>
       <div className="guess-container">
         <div className="input-group">
@@ -93,13 +95,13 @@ const App = () => {
             value={userGuess}
             onChange={handleInputChange}
             placeholder="Enter your answer..."
-            disabled={hasSubmitted}
-            className={`guess-input ${hasSubmitted ? 'disabled' : ''}`}
+            disabled={!isFront}
+            className={`guess-input ${!isFront ? 'disabled' : ''}`}
           />
           <button 
             onClick={handleSubmitGuess}
-            disabled={hasSubmitted || userGuess.trim() === ''}
-            className={`submit-btn ${hasSubmitted ? 'disabled' : ''}`}
+            disabled={!isFront || userGuess.trim() === ''}
+            className={`submit-btn ${!isFront ? 'disabled' : ''}`}
           >
             Submit
           </button>
