@@ -1,83 +1,132 @@
 import './App.css';
 import Card from "./components/Card"
 import { useState } from 'react';
+import flashcardsJson from "../flashcards.json"
 
 const App = () => {
-  /* Flashcards bank */
-  const flashcard = [
-    {
-      question: "What is the only antidote to Basilisk venom?",
-      answer: "Phoenix tears"
-    },
-    {
-      question: "Which magical object did Dumbledore leave to Ron in his will?",
-      answer: "Deluminator"
-    },
-    {
-      question: "As well as the sword of Godric Gryffindor, which object did Dumbledore leave to Harry in his will?",
-      answer: "Snitch"
-    },
-    {
-      question: "What form does Dolores Umbridge's Patronus take?",
-      answer: "Cat"
-    },
-    {
-      question: "What remedy does Hermione use to heal Ron's splinched arm?",
-      answer: "Essence of Dittany"
-    },
-    {
-      question: "Which dangerous horn does Hermione notice in the Lovegoods' house, which they believe to be from a Crumple-Horned Snorkack?",
-      answer: "Erumpent horn"
-    },
-    {
-      question: "Which spell does Hermione use to disfigure Harry's face, hoping that the Death Eaters wing recognise him?",
-      answer: "Stinging Jinx"
-    },
-    {
-      question: "What were Dobby's final two words?",
-      answer: "Harry Potter"
-    },
-    {
-      question: "What did Harry engrave on Dobby's white gravestone?",
-      answer: "Here lies Dobby, a Free Elf"
-    },
-    {
-      question: "What name is Buckbeak given in order to conceal his identity from the Ministry?",
-      answer: "Witherwings"
-    },
-  ]
 
   /* State variables (current card, flip state) */
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [isFront, setIsFront] = useState(false)
 
-  const currentCard = flashcard[currentCardIndex]
+  const currentCard = flashcardsJson.flashcards[currentCardIndex]
+  const [userGuess, setUserGuess] = useState('')
+  // Track if the guess has been submitted
+  const [hasSubmitted, setHasSubmitted] = useState(false)
+  
+  // Track if the guess is correct
+  const [isCorrect, setIsCorrect] = useState(false)
+
+  const resetGuessState = () => {
+    setUserGuess('')
+    setHasSubmitted(false)
+    setIsCorrect(false)
+  }
 
   /* Helper functions */
   const handleFlip = () => setIsFront(!isFront);
 
+  const handleInputChange = (event) => {
+    setUserGuess(event.target.value)
+  }
+
   const handleNextCard = () => {
-    if (currentCardIndex < flashcard.length - 1) {
+    if (currentCardIndex < flashcardsJson.flashcards.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
     }
     else {
       setCurrentCardIndex(0);
     }
     setIsFront(false);
+    resetGuessState();
+  }
+
+  const handlePrevCard = () => {
+    if (currentCardIndex > 0) {
+      setCurrentCardIndex(currentCardIndex - 1);
+    }
+    setIsFront(false);
+    resetGuessState();
+  }
+
+  const handleSubmitGuess = () => {
+    if (userGuess.trim() === '') return
+    
+    // Simple answer checking (case-insensitive, basic matching)
+    const correctAnswer = currentCard.answer.toLowerCase()
+    const guess = userGuess.toLowerCase().trim()
+    
+    // Check if guess contains key words from the answer
+    const isAnswerCorrect = checkAnswer(guess, correctAnswer)
+    
+    setIsCorrect(isAnswerCorrect)
+    setHasSubmitted(true)
+    setIsFront(true)
+  }
+
+  const checkAnswer = (guess, correctAnswer) => {
+    const normalizeText = (text) =>
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/[.,!?;:'"-]/g, '')
+        .replace(/\s+/g, ' ')
+
+    return normalizeText(guess) === normalizeText(correctAnswer)
   }
 
   /* Return UI */
   return (
     <div className="App">
-      <h1>Harry Potter Ultimate Trivia 🪄</h1>
-      <h3>Only true witches and wizards can master these Harry Potter trivia questions.</h3>
-      <h4>Number of Cards: {flashcard.length}</h4>
+      <div className="title-container">
+        <h1 className='title'>Harry Potter Ultimate Trivia 🪄</h1>
+        <p>Only true witches and wizards can master these Harry Potter trivia questions.</p>
+        <h4>Number of Cards: {flashcardsJson.flashcards.length}</h4>
+      </div>
       <div className="card-container">
         <Card front={currentCard.question} back={currentCard.answer} isFlipped={isFront} handleFlip={handleFlip}/>
       </div>
-      <button onClick={handleNextCard} className="next-button">
-        Next Card
-      </button>
+      <div className="guess-container">
+        <div className="input-group">
+          <input
+            type="text"
+            value={userGuess}
+            onChange={handleInputChange}
+            placeholder="Enter your answer..."
+            disabled={hasSubmitted}
+            className={`guess-input ${hasSubmitted ? 'disabled' : ''}`}
+          />
+          <button 
+            onClick={handleSubmitGuess}
+            disabled={hasSubmitted || userGuess.trim() === ''}
+            className={`submit-btn ${hasSubmitted ? 'disabled' : ''}`}
+          >
+            Submit
+          </button>
+        </div>
+        
+        {/* Feedback Display */}
+        {hasSubmitted && (
+          <div className={`feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
+            {isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+          </div>
+        )}
+      </div>
+      <div className='navigation'>
+        <button 
+          onClick={handlePrevCard}
+          disabled={currentCardIndex === 0}
+          className={`nav-btn prev-btn ${currentCardIndex === 0 ? 'disabled' : ''}`}>
+          ← Previous
+        </button>
+        <button 
+          onClick={handleNextCard} 
+          disabled={currentCardIndex === flashcardsJson.flashcards.length - 1}
+          className={`nav-btn next-btn ${currentCardIndex === flashcardsJson.flashcards.length - 1 ? 'disabled' : ''}`}>
+          Next →
+        </button>
+      </div>
+      
     </div>
   )
 }
